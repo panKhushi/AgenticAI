@@ -12,6 +12,7 @@ TOOLS = {
     "time": time_tool,
 }
 
+
 def execute_tool(tool_name, arguments):
     """
     Execute the requested tool.
@@ -62,22 +63,36 @@ if __name__ == "__main__":
         {"city": "Delhi"}
     )
     print(result)
-    print("\nDictionary Tool Test")
-print("----------------")
-print(
-    execute_tool(
-        "dictionary",
-        {"word": "computer"}
-    )
-)
-print("\nNews Tool Test")
-print("----------------")
 
-print(
-    execute_tool(
-        "news",
+    print("\nPDF Maker Test")
+    print("----------------")
+    result = execute_tool(
+        "pdfmaker",
         {
-            "topic": "Artificial Intelligence"
+            "title": "Sample PDF",
+            "content": "This PDF was created by the AI Agent.",
+            "filename": "sample.pdf"
         }
     )
-)
+    print(result)
+
+    print("\nPresentation Maker Test")
+    print("----------------")
+    result = execute_tool(
+        "presentationmaker",
+        {
+            "title": "AI Presentation",
+            "filename": "ai_presentation.pptx",
+            "slides": [
+                {
+                    "title": "Introduction",
+                    "content": "Artificial Intelligence\nMachine Learning"
+                },
+                {
+                    "title": "Applications",
+                    "content": "Healthcare\nFinance\nEducation"
+                }
+            ]
+        }
+    )
+    print(result)

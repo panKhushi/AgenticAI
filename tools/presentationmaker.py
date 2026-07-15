@@ -1,5 +1,5 @@
 from pptx import Presentation
-from pptx.util import Inches, Pt
+from pptx.util import Pt
 import os
 
 OUTPUT_FOLDER = "generated_presentations"
@@ -10,34 +10,6 @@ def create_presentation(
     slides: list,
     filename: str = "presentation.pptx"
 ) -> str:
-    """
-    Creates a PowerPoint presentation.
-
-    Parameters
-    ----------
-    title : str
-        Presentation title
-
-    slides : list
-        Example:
-        [
-            {
-                "title": "Introduction",
-                "content": "This is the introduction."
-            },
-            {
-                "title": "Applications",
-                "content": "Machine Learning\nData Science\nAI"
-            }
-        ]
-
-    filename : str
-
-    Returns
-    -------
-    str
-        Path of generated presentation.
-    """
 
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -67,11 +39,9 @@ def create_presentation(
         slide.shapes.title.text = item.get("title", "Untitled")
 
         body = slide.placeholders[1].text_frame
-
         body.clear()
 
         for line in item.get("content", "").split("\n"):
-
             p = body.add_paragraph()
             p.text = line
             p.level = 0
@@ -82,31 +52,45 @@ def create_presentation(
     return filepath
 
 
-if __name__ == "__main__":
+# -------------------------------------------------
+# Tool entry point
+# -------------------------------------------------
 
-    slides = [
+def execute(arguments: dict):
 
-        {
-            "title": "Introduction",
-            "content": "Artificial Intelligence\nMachine Learning\nDeep Learning"
-        },
+    title = arguments.get("title", "Presentation")
 
-        {
-            "title": "Applications",
-            "content": "Healthcare\nFinance\nEducation\nRobotics"
-        },
+    slides = arguments.get("slides", [])
 
-        {
-            "title": "Conclusion",
-            "content": "AI is transforming every industry."
-        }
-
-    ]
-
-    path = create_presentation(
-        title="Introduction to AI",
-        slides=slides,
-        filename="AI_Presentation.pptx"
+    filename = arguments.get(
+        "filename",
+        "presentation.pptx"
     )
 
-    print(path)
+    return create_presentation(
+        title=title,
+        slides=slides,
+        filename=filename
+    )
+
+
+if __name__ == "__main__":
+
+    print(
+        execute(
+            {
+                "title": "AI Presentation",
+                "filename": "AI_Presentation.pptx",
+                "slides": [
+                    {
+                        "title": "Introduction",
+                        "content": "Artificial Intelligence\nMachine Learning"
+                    },
+                    {
+                        "title": "Applications",
+                        "content": "Healthcare\nFinance\nEducation"
+                    }
+                ]
+            }
+        )
+    )

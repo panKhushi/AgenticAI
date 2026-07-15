@@ -1,13 +1,5 @@
-import os
-import sys
-
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, PROJECT_ROOT)
-
-
-from config import GEOCODING_URL, WEATHER_URL
 import requests
-
+from config import GEOCODING_URL, WEATHER_URL
 
 
 def execute(arguments: dict):
@@ -18,13 +10,9 @@ def execute(arguments: dict):
         return "Weather Error: City not provided."
 
     try:
-        # Get coordinates
         geo_response = requests.get(
             GEOCODING_URL,
-            params={
-                "name": city,
-                "count": 1
-            },
+            params={"name": city, "count": 1},
             timeout=10
         )
 
@@ -42,7 +30,6 @@ def execute(arguments: dict):
         city_name = location["name"]
         country = location.get("country", "")
 
-        # Get weather
         weather_response = requests.get(
             WEATHER_URL,
             params={
@@ -55,25 +42,18 @@ def execute(arguments: dict):
 
         weather_response.raise_for_status()
 
-        weather_data = weather_response.json()
-
-        current = weather_data["current_weather"]
-
-        temperature = current["temperature"]
-        windspeed = current["windspeed"]
-        weather_code = current["weathercode"]
+        current = weather_response.json()["current_weather"]
 
         return (
             f"City: {city_name}, Country: {country}\n"
-            f"Temperature: {temperature}°C\n"
-            f"Wind Speed: {windspeed} km/h\n"
-            f"Weather Code: {weather_code}"
+            f"Temperature: {current['temperature']}°C\n"
+            f"Wind Speed: {current['windspeed']} km/h\n"
+            f"Weather Code: {current['weathercode']}"
         )
 
     except Exception as e:
         return f"Weather Error: {e}"
+
+
 if __name__ == "__main__":
-    print("Weather tool \n")
-    print(
-        execute({"city": "New York"})
-    )
+    print(execute({"city": "Delhi"}))

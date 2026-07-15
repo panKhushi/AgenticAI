@@ -20,36 +20,64 @@ FUNCTIONS = {
     "abs": abs,
     "round": round,
 }
+
+
 def calculator(expression: str):
     try:
-        tree = ast.parse(expression,mode='eval')
-        result=_evaluate(tree.body)
+        tree = ast.parse(expression, mode="eval")
+        result = _evaluate(tree.body)
         return str(result)
     except Exception as e:
         return f"Calculator Error: {e}"
-    
+
+
+def execute(arguments: dict):
+    """
+    Entry point used by the tool registry.
+    """
+    expression = arguments.get("expression")
+
+    if not expression:
+        return "Calculator Error: No expression provided."
+
+    return calculator(expression)
+
+
 def _evaluate(node):
+
     if isinstance(node, ast.Constant):
         return node.value
+
     elif isinstance(node, ast.BinOp):
         return OPERATORS[type(node.op)](
             _evaluate(node.left),
             _evaluate(node.right)
         )
+
     elif isinstance(node, ast.UnaryOp):
         return OPERATORS[type(node.op)](
             _evaluate(node.operand)
         )
+
     elif isinstance(node, ast.Call):
+
         if not isinstance(node.func, ast.Name):
-            raise ValueError("Invalid Function")
+            raise ValueError("Invalid function")
+
         func_name = node.func.id
+
         if func_name not in FUNCTIONS:
             raise ValueError(f"Unsupported function: {func_name}")
+
         args = [_evaluate(arg) for arg in node.args]
+
         return FUNCTIONS[func_name](*args)
+
     raise ValueError(f"Unsupported expression: {ast.dump(node)}")
 
+
 if __name__ == "__main__":
-    print(calculator("25*18"))
-    print(calculator("(245+89)/2"))
+
+    print(execute({"expression": "25*18"}))
+    print(execute({"expression": "(245+89)/2"}))
+    print(execute({"expression": "sqrt(625)"}))
