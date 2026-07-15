@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+venv/
+.venv/
+
+# Environment Variables
+.env
+
+# Generated Files
+generated_pdfs/
+generated_presentations/
+
+# Memory/Data
+data/memory.json
+
+# VS Code
+.vscode/
+
+# OS Files
+.DS_Store
+Thumbs.db
