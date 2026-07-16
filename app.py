@@ -20,8 +20,14 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # ---------------- Display Chat History ---------------- #
+# NOTE: keys below include the message's index in st.session_state.messages.
+# Relying only on the file path (e.g. key=f"pdf_{pdf_path}") breaks with a
+# DuplicateWidgetID error the moment two messages reference the same
+# filename -- which happens easily since pdfmaker/presentationmaker both
+# default to a fixed filename ("output.pdf" / "presentation.pptx") when the
+# LLM doesn't supply one.
 
-for message in st.session_state.messages:
+for idx, message in enumerate(st.session_state.messages):
 
     with st.chat_message(message["role"]):
 
@@ -33,7 +39,7 @@ for message in st.session_state.messages:
 
             pdf_path = message["pdf"]
 
-            if os.path.exists(pdf_path):
+            if pdf_path and os.path.exists(pdf_path):
 
                 with open(pdf_path, "rb") as f:
                     pdf_bytes = f.read()
@@ -45,7 +51,7 @@ for message in st.session_state.messages:
                     data=pdf_bytes,
                     file_name=os.path.basename(pdf_path),
                     mime="application/pdf",
-                    key=f"pdf_{pdf_path}"
+                    key=f"pdf_{idx}_{os.path.basename(pdf_path)}"
                 )
 
                 pdf_base64 = base64.b64encode(pdf_bytes).decode()
@@ -67,7 +73,7 @@ for message in st.session_state.messages:
 
             ppt_path = message["ppt"]
 
-            if os.path.exists(ppt_path):
+            if ppt_path and os.path.exists(ppt_path):
 
                 with open(ppt_path, "rb") as f:
                     ppt_bytes = f.read()
@@ -79,7 +85,7 @@ for message in st.session_state.messages:
                     data=ppt_bytes,
                     file_name=os.path.basename(ppt_path),
                     mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    key=f"ppt_{ppt_path}"
+                    key=f"ppt_{idx}_{os.path.basename(ppt_path)}"
                 )
 
 # ---------------- Chat ---------------- #
@@ -112,6 +118,12 @@ if prompt:
         "content": assistant_message
     }
 
+    # This message's eventual index once appended below -- used to keep
+    # the newly-rendered download button's key in sync with the key it
+    # will get on the *next* rerun (when it's drawn by the history loop
+    # above), so Streamlit doesn't treat them as two different widgets.
+    new_idx = len(st.session_state.messages)
+
     with st.chat_message("assistant"):
 
         st.markdown(assistant_message)
@@ -121,6 +133,7 @@ if prompt:
         if (
             isinstance(tool_result, dict)
             and tool_result.get("type") == "pdf"
+            and tool_result.get("file")
         ):
 
             pdf_path = tool_result["file"]
@@ -139,7 +152,7 @@ if prompt:
                     data=pdf_bytes,
                     file_name=os.path.basename(pdf_path),
                     mime="application/pdf",
-                    key=f"download_pdf_{os.path.basename(pdf_path)}"
+                    key=f"pdf_{new_idx}_{os.path.basename(pdf_path)}"
                 )
 
                 pdf_base64 = base64.b64encode(pdf_bytes).decode()
@@ -160,6 +173,7 @@ if prompt:
         elif (
             isinstance(tool_result, dict)
             and tool_result.get("type") == "ppt"
+            and tool_result.get("file")
         ):
 
             ppt_path = tool_result["file"]
@@ -178,7 +192,7 @@ if prompt:
                     data=ppt_bytes,
                     file_name=os.path.basename(ppt_path),
                     mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    key=f"download_ppt_{os.path.basename(ppt_path)}"
+                    key=f"ppt_{new_idx}_{os.path.basename(ppt_path)}"
                 )
 
     st.session_state.messages.append(assistant_data)

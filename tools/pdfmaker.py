@@ -1,8 +1,14 @@
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph
+from xml.sax.saxutils import escape
 import os
 
-OUTPUT_FOLDER = "generated_pdfs"
+# Absolute path anchored to this file's location rather than the
+# process's current working directory. Streamlit Cloud (and some local
+# setups) can launch the app with a different cwd than you expect;
+# anchoring to __file__ makes the output folder consistent everywhere.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "generated_pdfs")
 
 
 def create_pdf(title: str, content: str, filename: str = "output.pdf"):
@@ -16,9 +22,16 @@ def create_pdf(title: str, content: str, filename: str = "output.pdf"):
 
     story = []
 
+    # ReportLab's Paragraph parses a small XML-like markup language.
+    # Unescaped "&", "<", ">" in LLM-generated title/content (e.g.
+    # "C++ & AI", "5 < 10") will raise a parse error and silently kill
+    # PDF generation. Escaping first fixes that class of failure.
+    safe_title = escape(title)
+    safe_content = escape(content).replace("\n", "<br/>")
+
     story.append(
         Paragraph(
-            f"<b><font size='18'>{title}</font></b>",
+            f"<b><font size='18'>{safe_title}</font></b>",
             styles["Title"]
         )
     )
@@ -29,7 +42,7 @@ def create_pdf(title: str, content: str, filename: str = "output.pdf"):
 
     story.append(
         Paragraph(
-            content.replace("\n", "<br/>"),
+            safe_content,
             styles["BodyText"]
         )
     )
@@ -45,11 +58,19 @@ def execute(arguments: dict):
     content = arguments.get("content", "")
     filename = arguments.get("filename", "output.pdf")
 
-    filepath = create_pdf(
-        title=title,
-        content=content,
-        filename=filename
-    )
+    try:
+        filepath = create_pdf(
+            title=title,
+            content=content,
+            filename=filename
+        )
+
+    except Exception as e:
+        return {
+            "type": "pdf",
+            "file": None,
+            "message": f"Failed to create PDF: {e}"
+        }
 
     return {
         "type": "pdf",

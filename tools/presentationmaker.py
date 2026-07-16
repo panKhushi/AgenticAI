@@ -2,7 +2,10 @@ from pptx import Presentation
 from pptx.util import Pt
 import os
 
-OUTPUT_FOLDER = "generated_presentations"
+# Absolute path anchored to this file's location, same reasoning as
+# pdfmaker.py: don't depend on the process's current working directory.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "generated_presentations")
 
 
 def create_presentation(
@@ -62,11 +65,19 @@ def execute(arguments: dict):
     slides = arguments.get("slides", [])
     filename = arguments.get("filename", "presentation.pptx")
 
-    filepath = create_presentation(
-        title=title,
-        slides=slides,
-        filename=filename
-    )
+    try:
+        filepath = create_presentation(
+            title=title,
+            slides=slides,
+            filename=filename
+        )
+
+    except Exception as e:
+        return {
+            "type": "ppt",
+            "file": None,
+            "message": f"Failed to create presentation: {e}"
+        }
 
     return {
         "type": "ppt",

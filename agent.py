@@ -35,7 +35,10 @@ class Agent:
         # ------------------------
 
         llm_response = chat(messages)
-
+        print("=" * 80)
+        print("RAW LLM RESPONSE:")
+        print(repr(llm_response))
+        print("=" * 80)
         tool_request = parse_tool_call(llm_response)
 
         # ------------------------
@@ -77,10 +80,21 @@ class Agent:
         print(f"\nTool Requested: {tool_name}")
         print("Arguments:", arguments)
 
-        tool_result = execute_tool(
-            tool_name,
-            arguments
-        )
+        try:
+            tool_result = execute_tool(
+                tool_name,
+                arguments
+            )
+
+        except Exception as e:
+            # A tool crashing (bad args, missing dependency, disk
+            # permission issue, etc.) must never bubble up as a raw
+            # exception in the Streamlit UI.
+            print("Tool Execution Error:", e)
+
+            tool_result = {
+                "message": f"Sorry, the '{tool_name}' tool failed to run: {e}"
+            }
 
         # ------------------------
         # Prepare Final Message
@@ -92,6 +106,12 @@ class Agent:
                 "message",
                 "Task completed successfully."
             )
+
+            # If the tool reported failure (no file produced), don't
+            # pass a broken tool_result through to app.py's file-preview
+            # logic — treat it as a plain text response instead.
+            if tool_result.get("type") in ("pdf", "ppt") and not tool_result.get("file"):
+                tool_result = None
 
         else:
 
