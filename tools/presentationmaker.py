@@ -9,7 +9,7 @@ def create_presentation(
     title: str,
     slides: list,
     filename: str = "presentation.pptx"
-) -> str:
+):
 
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -59,19 +59,20 @@ def create_presentation(
 def execute(arguments: dict):
 
     title = arguments.get("title", "Presentation")
-
     slides = arguments.get("slides", [])
+    filename = arguments.get("filename", "presentation.pptx")
 
-    filename = arguments.get(
-        "filename",
-        "presentation.pptx"
-    )
-
-    return create_presentation(
+    filepath = create_presentation(
         title=title,
         slides=slides,
         filename=filename
     )
+
+    return {
+        "type": "ppt",
+        "file": filepath,
+        "message": f"Presentation '{filename}' created successfully."
+    }
 
 
 if __name__ == "__main__":

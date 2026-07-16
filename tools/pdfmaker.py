@@ -5,10 +5,7 @@ import os
 OUTPUT_FOLDER = "generated_pdfs"
 
 
-def create_pdf(title: str, content: str, filename: str = "output.pdf") -> str:
-    """
-    Creates a PDF from text.
-    """
+def create_pdf(title: str, content: str, filename: str = "output.pdf"):
 
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -21,12 +18,14 @@ def create_pdf(title: str, content: str, filename: str = "output.pdf") -> str:
 
     story.append(
         Paragraph(
-            f"<b><font size=18>{title}</font></b>",
+            f"<b><font size='18'>{title}</font></b>",
             styles["Title"]
         )
     )
 
-    story.append(Paragraph("<br/><br/>", styles["BodyText"]))
+    story.append(
+        Paragraph("<br/><br/>", styles["BodyText"])
+    )
 
     story.append(
         Paragraph(
@@ -40,23 +39,23 @@ def create_pdf(title: str, content: str, filename: str = "output.pdf") -> str:
     return filepath
 
 
-# -------------------------------------------------
-# Tool entry point
-# -------------------------------------------------
-
 def execute(arguments: dict):
 
     title = arguments.get("title", "Untitled")
-
     content = arguments.get("content", "")
-
     filename = arguments.get("filename", "output.pdf")
 
-    return create_pdf(
+    filepath = create_pdf(
         title=title,
         content=content,
         filename=filename
     )
+
+    return {
+        "type": "pdf",
+        "file": filepath,
+        "message": f"PDF '{filename}' created successfully."
+    }
 
 
 if __name__ == "__main__":

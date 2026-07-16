@@ -30,9 +30,17 @@ class Agent:
             }
         )
 
+        # ------------------------
+        # Ask LLM
+        # ------------------------
+
         llm_response = chat(messages)
 
         tool_request = parse_tool_call(llm_response)
+
+        # ------------------------
+        # Normal Conversation
+        # ------------------------
 
         if tool_request is None:
 
@@ -52,7 +60,14 @@ class Agent:
 
             save_memory(memory)
 
-            return llm_response
+            return {
+                "message": llm_response,
+                "tool_result": None
+            }
+
+        # ------------------------
+        # Execute Tool
+        # ------------------------
 
         tool_name = tool_request.get("tool")
 
@@ -67,26 +82,26 @@ class Agent:
             arguments
         )
 
-        messages.append(
-            {
-                "role": "assistant",
-                "content": llm_response
-            }
-        )
+        # ------------------------
+        # Prepare Final Message
+        # ------------------------
 
-        messages.append(
-            {
-                "role": "user",
-                "content": f"""
-Tool Result:
-{tool_result}
+        if isinstance(tool_result, dict):
 
-Using this tool result answer the user's original question.
-"""
-            }
-        )
+            assistant_message = tool_result.get(
+                "message",
+                "Task completed successfully."
+            )
 
-        final_response = chat(messages)
+        else:
+
+            assistant_message = str(tool_result)
+
+            tool_result = None
+
+        # ------------------------
+        # Save Memory
+        # ------------------------
 
         memory.append(
             {
@@ -98,13 +113,16 @@ Using this tool result answer the user's original question.
         memory.append(
             {
                 "role": "assistant",
-                "content": final_response
+                "content": assistant_message
             }
         )
 
         save_memory(memory)
 
-        return final_response
+        return {
+            "message": assistant_message,
+            "tool_result": tool_result
+        }
 
 
 if __name__ == "__main__":
@@ -118,4 +136,11 @@ if __name__ == "__main__":
         if user_input.lower() == "exit":
             break
 
-        print("Agent:", agent.run_agent(user_input))
+        response = agent.run_agent(user_input)
+
+        print("\nAssistant:")
+        print(response["message"])
+
+        if response["tool_result"]:
+            print("\nTool Result:")
+            print(response["tool_result"])

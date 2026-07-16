@@ -10,6 +10,9 @@ venv/
 # Environment Variables
 .env
 
+# Configuration
+config.py
+
 # Generated Files
 generated_pdfs/
 generated_presentations/
